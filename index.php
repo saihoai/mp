@@ -1,14 +1,9 @@
-<?php
-/** Image PlaceHolder for PHP.
- * Usage : iph.php?<WIDTH>x<HEIGHT>/<COLOR>
- * Ex : iph.php?800x600/FF00FF
- * Author : Léo Peltier
- * LICENSE : WTFPL
- * */?>
 
 <?php if( !isset( $_GET[ 'mholder' ] ) && !isset( $_GET[ 'msearch' ] ) ) : ?>
 <style>
+	body { text-align: center; }
 	a { display: block; margin: 0 0 10px; }
+	.cholder, .cmholder { padding: 10px 40px; text-decoration: none; display: inline-block; background: red; color: #fff; }
 </style>
 <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 <script>
@@ -25,6 +20,12 @@
 				$t.replaceWith( r );
 			} );
 			return false;
+		} ).delegate( '.cholder', 'click', function() {
+			$( 'body' ).prepend( '<a href="/" class="cmholder">Make placeholder</a>' );
+			return false;
+		} ).delegate( '.cmholder', 'click', function() {
+			$( '.mholder' ).trigger( 'click' );
+			return false;
 		} );
 	});
 </script>
@@ -34,21 +35,26 @@
 
  <?php
 
-// step 1: 
-// return copy_directory(dirname( __FILE__ ) . '/master', dirname( __FILE__ ) . '/placeholder') ;
-// step 2: read folder
+if( !isset( $_GET[ 'mholder' ] ) && !isset( $_GET[ 'msearch' ] ) ) 
+{
+	copy_directory(dirname( __FILE__ ) . '/master', dirname( __FILE__ ) . '/placeholder') ;
+	echo '<a href="" class="msearch cholder">Start</a>';
+	die();
+}
 
- if( isset( $_GET[ 'mholder' ] ) )
- {
- 	mholder( $_GET[ 'mholder' ] );die();
- }
-readfolder( isset( $_GET[ 'msearch' ] ) ? $_GET[ 'msearch' ] : '' );die();
+if( isset( $_GET[ 'mholder' ] ) )
+{
+	mholder( $_GET[ 'mholder' ] );die();
+}
+
+if( isset( $_GET[ 'msearch' ] ) )
+{
+	readfolder( isset( $_GET[ 'msearch' ] ) ? $_GET[ 'msearch' ] : '' );die();
+}
 
 
-
-
-
-function copy_directory($src,$dst) { 
+function copy_directory($src,$dst)
+{ 
     $dir = opendir($src); 
     @mkdir($dst); 
     while(false !== ( $file = readdir($dir)) ) { 
@@ -94,64 +100,9 @@ function readfolder( $p = '' )
 }
 
 
-/** Fetch the requested image size from $_SERVER['QUERY_STRING'].
- * \returns ({x:int, y:int}) : queried image size.
- * */
-function get_size_from_query() {
-    if(empty($_SERVER['QUERY_STRING']))
-        return null;
-
-    $matches = array();
-    preg_match('`\d+(x|\*|⋅|×)\d+`i', $_SERVER['QUERY_STRING'], $matches);
-    if(count($matches) != 2)
-        return null;
-
-    list($x, $y) = array_map('intval', explode($matches[1], $matches[0]));
-    return (object) compact('x', 'y');
-}
-
-
-/** Fetch the requested image color.
- * \return (int) : image color.
- * */
-function get_filling_from_query() {
-    if(empty($_SERVER['QUERY_STRING']))
-        return null;
-
-    $matches = array();
-    preg_match('`[a-f0-9]{6}`i', $_SERVER['QUERY_STRING'], $matches);
-    if(!count($matches))
-        return null;
-
-    return (int) base_convert($matches[0], 16, 10);
-}
-
-
-/** Draw an outer border.
- * \param $img (GD2 image) : image.
- * \param $size ({x:int, y:int}) : image size.
- * \param $color (GD2 color) : color to use for the border.
- * \param $thickness (int>0) : border thickness.
- * */
-function imageborder(&$img, $size, $color = null, $thickness = 4) {
-    if(!$color)
-        $color = 0;
-
-    $offset = floor($thickness/2);
-    $box = (object) array(
-        'ax' => $offset,
-        'ay' => $offset,
-        'bx' => $size->x - $offset - 1,
-        'by' => $size->y - $offset - 1
-    );
-
-    imagesetthickness($img, $thickness);
-    imagerectangle($img, $box->ax, $box->ay, $box->bx, $box->by, $color);
-}
-
-
 /// Get rid of output buffering.
-function ob_end_clean_all() {
+function ob_end_clean_all()
+{
     $level = ob_get_level();
     for($i=0; $i<$level; $i++) {
         ob_end_clean();
@@ -160,7 +111,8 @@ function ob_end_clean_all() {
 
 
 /// Script entry point.
-function mholder( $file ) {
+function mholder( $file ) 
+{
 
 	$dest = str_replace( '/master/', '/placeholder/', $file );
     list($imgWidth, $imgHeight, $type, $attr) = getimagesize( $file );
@@ -187,7 +139,7 @@ function mholder( $file ) {
 	 * Define the typeface settings.
 	 */
     $text = "{$imgWidth}x{$imgHeight}";
-	$fontFile = realpath(__DIR__) . DIRECTORY_SEPARATOR . 'RobotoMono-Regular.ttf';
+	$fontFile = realpath(__DIR__)  . '/RobotoMono-Regular.ttf';
 	if ( ! is_readable($fontFile)) {
 	    $fontFile = 'arial';
 	}
